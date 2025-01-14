@@ -1,24 +1,24 @@
 # API Monitor Service
 
-บริการตรวจสอบสถานะ API แบบอัตโนมัติพร้อมระบบแจ้งเตือนผ่านอีเมล
+Automated API status monitoring service with email notification system
 
-## คุณสมบัติหลัก
-- ตรวจสอบสถานะ API หลายจุดพร้อมกัน
-- กำหนดเวลาตรวจสอบได้ (วินาที/นาที/ชั่วโมง) 
-- แจ้งเตือนผ่านอีเมลเมื่อพบข้อผิดพลาด
-- บันทึกประวัติข้อผิดพลาดลงไฟล์
-- ป้องกันการส่งแจ้งเตือนซ้ำกรณีพบข้อผิดพลาดเดิม
+## Key Features
+- Monitor multiple API endpoints simultaneously
+- Configurable monitoring schedule (seconds/minutes/hours)
+- Email notifications for API errors
+- Error history logging
+- Prevention of duplicate notifications for the same error
 
-## การติดตั้ง
+## Installation
 `npm install`
 `npm start`
 
-## การตั้งค่า
-`MONITOR_SCHEDULE` คือ ระยะเวลาที่จะตรวจสอบ API ที่กำหนดไว้ ตัวอย่าง `10s` หมายถึงทุก 10 วินาที
-`ENDPOINTS` คือ ลิสต์ของ API ที่จะตรวจสอบ ตัวอย่าง `API Test|https://api.domain.com/api/test|200,User Service|https://user-api.domain.com/api/users|200` หมายถึงตรวจสอบ API Test ทุก 10 วินาที และ User Service ทุก 10 วินาที
+## Configuration
+`MONITOR_SCHEDULE` defines the monitoring interval. Examples: `10s` for every 10 seconds, `10m` for every 10 minutes, or `10h` for every 10 hours.  
+`ENDPOINTS` is a list of APIs to monitor. Example: `API Test|https://api.domain.com/api/test|200,User Service|https://user-api.domain.com/api/users|200` means monitoring both API Test and User Service every 10 seconds.
 
-## การตั้งค่าใน SMTP
-ต้องตั้งค่าใน SMTP เพื่อส่งอีเมลผ่าน SMTP ด้วยคีย์ API ของ SMTP ที่ตั้งค่าไว้ใน `.env` ด้วยคีย์ `SMTP_API_KEY`
+## SMTP Configuration
+SMTP configuration is required for sending emails. Set up your SMTP API key in the `.env` file using the `SMTP_API_KEY` variable.
 
 ## LICENSE
 MIT
