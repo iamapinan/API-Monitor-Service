@@ -38,7 +38,14 @@
         const successRate = total > 0 ? ((stats.success / total) * 100).toFixed(1) : 0;
       %>
         <div class="bg-white rounded-lg shadow p-6" id="endpoint-<%= endpoint.name %>">
-          <h2 class="text-xl font-semibold mb-4"><%= endpoint.name %></h2>
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold"><%= endpoint.name %></h2>
+            <a href="/status/<%= endpoint.name %>" 
+               class="text-blue-600 hover:text-blue-800 text-sm"
+               title="View Details">
+               View Details →
+             </a>
+          </div>
           <div class="space-y-2">
             <p><strong>URL:</strong> <%= endpoint.url %></p>
             <p><strong>Method:</strong> <%= endpoint.method %></p>

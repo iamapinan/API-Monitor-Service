@@ -10,6 +10,9 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
+// Add moment to locals so it's available in all views
+app.locals.moment = moment;
+
 // View engine setup
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -32,6 +35,29 @@ app.get('/logs', async (req, res) => {
     formattedTime: moment(log.timestamp).format('YYYY-MM-DD HH:mm:ss')
   }));
   res.render('logs', { logs: formattedLogs });
+});
+
+// Status Monitor Route
+app.get('/status/:endpointName', async (req, res) => {
+  const endpoints = await loadEndpointConfig();
+  const endpoint = endpoints.find(e => e.name === req.params.endpointName);
+  
+  if (!endpoint) {
+    return res.status(404).render('404', { message: 'Endpoint not found' });
+  }
+  
+  const logs = await getLogs();
+  const endpointLogs = logs
+    .filter(log => log.endpoint === endpoint.name)
+    .map(log => ({
+      ...log,
+      formattedTime: moment(log.timestamp).format('YYYY-MM-DD HH:mm:ss')
+    }));
+  
+  const stats = getEndpointStats()[endpoint.name] || { success: 0, error: 0 };
+  const status = (await getMonitoringStatus())[endpoint.name];
+  
+  res.render('status', { endpoint, logs: endpointLogs, stats, status });
 });
 
 // API Routes
