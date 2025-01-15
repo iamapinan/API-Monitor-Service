@@ -40,20 +40,6 @@ app.get('/api/status', async (req, res) => {
   res.json(status);
 });
 
-app.get('/api/endpoints', async (req, res) => {
-  const endpoints = await loadEndpointConfig();
-  res.json(endpoints);
-});
-
-app.post('/api/endpoints', async (req, res) => {
-  try {
-    // TODO: Implement endpoint update logic
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // Socket.IO events
 io.on('connection', (socket) => {
   console.log('Client connected');
