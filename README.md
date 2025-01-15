@@ -10,8 +10,8 @@ Automated API status monitoring service with email notification system
 - Prevention of duplicate notifications for the same error
 
 ## Installation
-`npm install`
-`npm start`
+`npm install`  
+`npm start`  
 
 ## Configuration
 `MONITOR_SCHEDULE` defines the monitoring interval. Examples: `10s` for every 10 seconds, `10m` for every 10 minutes, or `10h` for every 10 hours.  
