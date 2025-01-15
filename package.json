@@ -1,8 +1,20 @@
 {
+  "name": "api-monitor",
+  "version": "1.0.0",
+  "description": "API Monitoring Service",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest"
+  },
   "dependencies": {
-    "axios": "^1.7.9",
-    "dotenv": "^16.4.7",
+    "ajv": "^8.12.0",
+    "axios": "^1.6.7",
+    "dotenv": "^16.4.5",
     "node-cron": "^3.0.3",
-    "nodemailer": "^6.9.16"
+    "nodemailer": "^6.9.10"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
   }
 }

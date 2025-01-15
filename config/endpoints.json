@@ -1,0 +1,57 @@
+{
+  "endpoints": [
+    {
+      "name": "KSP API Test",
+      "url": "https://dev-api.ksp.gracercorp.com/api/test",
+      "method": "GET",
+      "schedule": "30s",
+      "expectedStatus": 200,
+      "headers": {
+        "Authorization": "Bearer ${API_TOKEN}"
+      },
+      "input": {
+        "body": {
+          "test": "value"
+        },
+        "params": {
+          "key": "value"
+        }
+      },
+      "validation": {
+        "responseTime": 5000,
+        "schema": {
+          "status": "success",
+          "data": {
+            "required": true,
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "name": "User Service",
+      "url": "https://dev-api.ksp.gracercorp.com/api/users",
+      "method": "POST",
+      "schedule": "1m",
+      "expectedStatus": 201,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "input": {
+        "body": {
+          "username": "test",
+          "password": "test123"
+        }
+      },
+      "validation": {
+        "responseTime": 3000,
+        "schema": {
+          "id": {
+            "required": true,
+            "type": "string"
+          }
+        }
+      }
+    }
+  ]
+} 

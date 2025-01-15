@@ -1,63 +1,87 @@
 const axios = require('axios');
+const Ajv = require('ajv');
 const { sendErrorEmail } = require('./emailService');
-const { endpoints } = require('../config/endpoints');
 const { saveErrorLog, getLastErrorLog } = require('./logService');
 
-const monitorEndpoint = async () => {
-  if (!endpoints.length) {
-    console.error('No endpoints configured. Skipping monitoring.');
-    return;
+const validateResponse = (response, validation) => {
+  if (!validation) return true;
+
+  // ตรวจสอบ response time
+  if (validation.responseTime && response.responseTime > validation.responseTime) {
+    throw new Error(`Response time ${response.responseTime}ms exceeded limit of ${validation.responseTime}ms`);
   }
 
-  for (const endpoint of endpoints) {
-    if (!endpoint.url || !endpoint.name || !endpoint.expectedStatus) {
-      console.error(`Skipping invalid endpoint configuration: ${endpoint.name || 'unnamed'}`);
-      continue;
+  // ตรวจสอบ response schema
+  if (validation.schema) {
+    const ajv = new Ajv();
+    const validate = ajv.compile(validation.schema);
+    if (!validate(response.data)) {
+      throw new Error(`Response schema validation failed: ${ajv.errorsText(validate.errors)}`);
+    }
+  }
+
+  return true;
+};
+
+const monitorEndpoint = async (endpoint) => {
+  try {
+    console.log(`Checking endpoint: ${endpoint.name} (${endpoint.url})`);
+    
+    const startTime = Date.now();
+    
+    const response = await axios({
+      method: endpoint.method,
+      url: endpoint.url,
+      headers: endpoint.headers,
+      params: endpoint.input?.params,
+      data: endpoint.input?.body,
+      validateStatus: null
+    });
+
+    response.responseTime = Date.now() - startTime;
+
+    if (response.status !== endpoint.expectedStatus) {
+      throw new Error(`API returned status code: ${response.status}`);
     }
 
-    try {
-      console.log(`Checking endpoint: ${endpoint.name} (${endpoint.url})`);
-      const response = await axios.get(endpoint.url);
-      
-      if (response.status !== endpoint.expectedStatus) {
-        throw new Error(`API returned status code: ${response.status}`);
-      }
-      
-      console.log(`[${endpoint.name}] API check successful`);
-      
-    } catch (error) {
-      const errorMessage = error.response 
-        ? `Status: ${error.response.status}, Message: ${error.response.statusText}`
-        : error.message;
+    validateResponse(response, endpoint.validation);
+    
+    console.log(`[${endpoint.name}] API check successful (${response.responseTime}ms)`);
+    
+  } catch (error) {
+    const errorMessage = error.response 
+      ? `Status: ${error.response.status}, Message: ${error.response.statusText}`
+      : error.message;
 
-      const errorSignature = {
-        endpoint: endpoint.name,
-        status: error.response?.status,
-        message: errorMessage
-      };
+    const errorSignature = {
+      endpoint: endpoint.name,
+      status: error.response?.status,
+      message: errorMessage
+    };
 
-      const lastError = await getLastErrorLog(endpoint.name);
+    const lastError = await getLastErrorLog(endpoint.name);
+    
+    if (!lastError || 
+        lastError.status !== errorSignature.status || 
+        lastError.message !== errorSignature.message) {
       
-      if (!lastError || 
-          lastError.status !== errorSignature.status || 
-          lastError.message !== errorSignature.message) {
-        
-        console.error(`[${endpoint.name}] API check failed:`, errorMessage);
-        
-        await saveErrorLog(errorSignature);
-        
-        await sendErrorEmail({
-          subject: `API Error Alert: ${endpoint.name}`,
-          message: `
+      console.error(`[${endpoint.name}] API check failed:`, errorMessage);
+      
+      await saveErrorLog(errorSignature);
+      
+      await sendErrorEmail({
+        subject: `API Error Alert: ${endpoint.name}`,
+        message: `
 Monitor: ${endpoint.name}
 URL: ${endpoint.url}
+Method: ${endpoint.method}
 Error: ${errorMessage}
 Time: ${new Date().toLocaleString()}
-          `.trim()
-        });
-      } else {
-        console.log(`[${endpoint.name}] Skipped notification - Same error as last time`);
-      }
+${error.response?.data ? `Response: ${JSON.stringify(error.response.data, null, 2)}` : ''}
+        `.trim()
+      });
+    } else {
+      console.log(`[${endpoint.name}] Skipped notification - Same error as last time`);
     }
   }
 };

@@ -1,15 +1,30 @@
 const cron = require('node-cron');
 const { monitorEndpoint } = require('./services/monitor');
 const { parseSchedule } = require('./utils/scheduleParser');
+const { loadEndpointConfig } = require('./config/endpointConfig');
 require('dotenv').config();
 
-const schedule = parseSchedule(process.env.MONITOR_SCHEDULE);
+const startMonitoring = async () => {
+  const endpoints = await loadEndpointConfig();
+  
+  if (!endpoints.length) {
+    console.error('No valid endpoints configured. Please check config/endpoints.json');
+    return;
+  }
 
-console.log(`Starting API Monitor with schedule: ${process.env.MONITOR_SCHEDULE || '5m (default)'}`);
+  // สร้าง cron job สำหรับแต่ละ endpoint
+  endpoints.forEach(endpoint => {
+    const schedule = parseSchedule(endpoint.schedule || process.env.MONITOR_SCHEDULE);
+    
+    console.log(`Scheduling ${endpoint.name} with: ${endpoint.schedule || '5m (default)'}`);
+    
+    cron.schedule(schedule, async () => {
+      console.log(`Running check for ${endpoint.name} at ${new Date().toLocaleString()}`);
+      await monitorEndpoint(endpoint);
+    });
+  });
 
-cron.schedule(schedule, async () => {
-  console.log(`Running API endpoint check at ${new Date().toLocaleString()}`);
-  await monitorEndpoint();
-});
+  console.log('API Monitoring Service Started');
+};
 
-console.log('API Monitoring Service Started'); 
+startMonitoring().catch(console.error); 

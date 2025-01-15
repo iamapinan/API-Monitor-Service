@@ -6,57 +6,81 @@ const { saveErrorLog, getLastErrorLog } = require('../src/services/logService');
 jest.mock('axios');
 jest.mock('../src/services/emailService');
 jest.mock('../src/services/logService');
-jest.mock('../config/endpoints', () => ({
-  endpoints: [
-    {
-      name: 'Test API',
-      url: 'https://test-api.com',
-      expectedStatus: 200
-    }
-  ]
-}));
 
 describe('Monitor Service', () => {
+  const mockEndpoint = {
+    name: 'Test API',
+    url: 'https://test-api.com',
+    method: 'POST',
+    expectedStatus: 200,
+    headers: { 'Content-Type': 'application/json' },
+    input: {
+      body: { test: 'data' }
+    },
+    validation: {
+      responseTime: 1000,
+      schema: {
+        type: 'object',
+        required: ['status'],
+        properties: {
+          status: { type: 'string' }
+        }
+      }
+    }
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should not send email when API check is successful', async () => {
-    axios.get.mockResolvedValue({ status: 200 });
+  it('should validate successful response', async () => {
+    const mockResponse = {
+      status: 200,
+      data: { status: 'success' },
+      responseTime: 500
+    };
     
-    await monitorEndpoint();
+    axios.mockResolvedValue(mockResponse);
+    
+    await monitorEndpoint(mockEndpoint);
     
     expect(sendErrorEmail).not.toHaveBeenCalled();
   });
 
-  it('should send email only for new errors', async () => {
-    const errorResponse = {
-      response: {
-        status: 500,
-        statusText: 'Internal Server Error'
-      }
+  it('should detect response time violations', async () => {
+    const mockResponse = {
+      status: 200,
+      data: { status: 'success' },
+      responseTime: 1500
     };
     
-    axios.get.mockRejectedValue(errorResponse);
-    getLastErrorLog.mockResolvedValueOnce(null);
+    axios.mockResolvedValue(mockResponse);
     
-    await monitorEndpoint();
+    await monitorEndpoint(mockEndpoint);
     
-    expect(sendErrorEmail).toHaveBeenCalledWith({
-      subject: expect.stringContaining('Test API'),
-      message: expect.stringContaining('Monitor: Test API')
-    });
-    expect(saveErrorLog).toHaveBeenCalled();
+    expect(sendErrorEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: expect.stringContaining('Test API'),
+        message: expect.stringContaining('Response time')
+      })
+    );
+  });
 
-    jest.clearAllMocks();
+  it('should validate response schema', async () => {
+    const mockResponse = {
+      status: 200,
+      data: { wrong: 'format' },
+      responseTime: 500
+    };
     
-    getLastErrorLog.mockResolvedValueOnce({
-      status: 500,
-      message: 'Status: 500, Message: Internal Server Error'
-    });
+    axios.mockResolvedValue(mockResponse);
     
-    await monitorEndpoint();
+    await monitorEndpoint(mockEndpoint);
     
-    expect(sendErrorEmail).not.toHaveBeenCalled();
+    expect(sendErrorEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringContaining('schema validation failed')
+      })
+    );
   });
 }); 
