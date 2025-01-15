@@ -8,6 +8,7 @@ Automated API status monitoring service with email notification system
 - Email notifications for API errors
 - Error history logging
 - Prevention of duplicate notifications for the same error
+- Build-in GUI for easy monitoring
 
 ## Installation
 `npm install`  

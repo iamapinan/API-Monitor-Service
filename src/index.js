@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const { monitorEndpoint } = require('./services/monitor');
 const { parseSchedule } = require('./utils/scheduleParser');
 const { loadEndpointConfig } = require('./config/endpointConfig');
+const { startWebServer } = require('./web/server');
 require('dotenv').config();
 
 const startMonitoring = async () => {
@@ -11,6 +12,9 @@ const startMonitoring = async () => {
     console.error('No valid endpoints configured. Please check config/endpoints.json');
     return;
   }
+
+  // Start web interface
+  startWebServer(process.env.WEB_PORT || 3000);
 
   // สร้าง cron job สำหรับแต่ละ endpoint
   endpoints.forEach(endpoint => {

@@ -2,6 +2,7 @@ const axios = require('axios');
 const Ajv = require('ajv');
 const { sendErrorEmail } = require('./emailService');
 const { saveErrorLog, getLastErrorLog } = require('./logService');
+const { updateEndpointStatus } = require('../web/statusManager');
 
 const validateResponse = (response, validation) => {
   if (!validation) return true;
@@ -48,6 +49,12 @@ const monitorEndpoint = async (endpoint) => {
     
     console.log(`[${endpoint.name}] API check successful (${response.responseTime}ms)`);
     
+    updateEndpointStatus(endpoint, {
+      success: true,
+      responseTime: response.responseTime,
+      data: response.data
+    });
+
   } catch (error) {
     const errorMessage = error.response 
       ? `Status: ${error.response.status}, Message: ${error.response.statusText}`
@@ -83,6 +90,11 @@ ${error.response?.data ? `Response: ${JSON.stringify(error.response.data, null, 
     } else {
       console.log(`[${endpoint.name}] Skipped notification - Same error as last time`);
     }
+
+    updateEndpointStatus(endpoint, {
+      success: false,
+      error: errorMessage
+    });
   }
 };
 

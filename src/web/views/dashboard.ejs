@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>API Monitor Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+</head>
+<body class="bg-gray-100">
+  <nav class="bg-white shadow mb-8">
+    <div class="container mx-auto px-4">
+      <div class="flex justify-between h-16">
+        <div class="flex items-center">
+          <h1 class="text-2xl font-bold">API Monitor</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+          <a href="/" class="px-3 py-2 rounded-md text-gray-700 hover:text-gray-900">Dashboard</a>
+          <a href="/logs" class="px-3 py-2 rounded-md text-gray-700 hover:text-gray-900">Logs</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mx-auto px-4">
+    <!-- Status Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <% endpoints.forEach(function(endpoint) { 
+        const stats = endpointStats[endpoint.name] || { success: 0, error: 0 };
+        const total = stats.success + stats.error;
+        const successRate = total > 0 ? ((stats.success / total) * 100).toFixed(1) : 0;
+      %>
+        <div class="bg-white rounded-lg shadow p-6" id="endpoint-<%= endpoint.name %>">
+          <h2 class="text-xl font-semibold mb-4"><%= endpoint.name %></h2>
+          <div class="space-y-2">
+            <p><strong>URL:</strong> <%= endpoint.url %></p>
+            <p><strong>Method:</strong> <%= endpoint.method %></p>
+            <p><strong>Schedule:</strong> <%= endpoint.schedule || process.env.MONITOR_SCHEDULE %></p>
+            <p><strong>Status:</strong> <span class="status-badge px-2 py-1 rounded text-white">Unknown</span></p>
+            <p><strong>Last Check:</strong> <span class="last-check">-</span></p>
+            <p><strong>Response Time:</strong> <span class="response-time">-</span></p>
+            
+            <!-- Stats -->
+            <div class="mt-4 pt-4 border-t">
+              <div class="flex justify-between items-center mb-2">
+                <span>Success Rate:</span>
+                <span class="font-semibold"><%= successRate %>%</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2.5">
+                <div class="bg-green-600 h-2.5 rounded-full" style="width: <%= successRate %>%"></div>
+              </div>
+              <div class="flex justify-between mt-2 text-sm">
+                <span class="text-green-600">Success: <%= stats.success %></span>
+                <span class="text-red-600">Error: <%= stats.error %></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+
+    <!-- Config Viewer -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+      <h2 class="text-xl font-semibold mb-4">Configuration</h2>
+      <pre class="bg-gray-50 p-4 rounded overflow-auto max-h-96"><code><%= JSON.stringify(endpoints, null, 2) %></code></pre>
+    </div>
+  </div>
+
+  <script>
+    const socket = io();
+    
+    // Handle real-time updates
+    socket.on('statusUpdate', ({ endpoint, status }) => {
+      const card = document.getElementById(`endpoint-${endpoint}`);
+      if (card) {
+        const badge = card.querySelector('.status-badge');
+        badge.textContent = status.success ? 'Success' : 'Error';
+        badge.className = `status-badge px-2 py-1 rounded text-white ${status.success ? 'bg-green-500' : 'bg-red-500'}`;
+        
+        card.querySelector('.last-check').textContent = moment(status.lastCheck).fromNow();
+        card.querySelector('.response-time').textContent = status.responseTime ? `${status.responseTime}ms` : '-';
+      }
+    });
+  </script>
+</body>
+</html> 
