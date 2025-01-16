@@ -4,7 +4,7 @@
       "name": "API Test",
       "url": "https://test.local/api/test",
       "method": "GET",
-      "schedule": "1m",
+      "schedule": "10s",
       "expectedStatus": 200,
       "headers": {
         "Authorization": "Bearer ${API_TOKEN}"

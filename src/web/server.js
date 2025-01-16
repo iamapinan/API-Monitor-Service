@@ -18,6 +18,8 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+app.use('/css', express.static(path.join(__dirname, '../../node_modules/@fortawesome/fontawesome-free/css')));
+app.use('/webfonts', express.static(path.join(__dirname, '../../node_modules/@fortawesome/fontawesome-free/webfonts')));
 
 // Routes
 app.get('/', async (req, res) => {
