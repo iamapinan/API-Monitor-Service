@@ -1,8 +1,8 @@
 {
   "endpoints": [
     {
-      "name": "Example Endpoint",
-      "url": "https://local.domain/api",
+      "name": "API Test",
+      "url": "https://test.local/api/test",
       "method": "GET",
       "schedule": "10s",
       "expectedStatus": 200,
@@ -11,7 +11,14 @@
       "input": {
       },
       "validation": {
-        "responseTime": 5000
+        "responseTime": 5000,
+        "schema": {
+          "status": "success",
+          "data": {
+            "required": true,
+            "type": "object"
+          }
+        }
       }
     }
   ]
