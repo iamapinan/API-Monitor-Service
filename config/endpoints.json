@@ -4,7 +4,7 @@
       "name": "KSP API Test",
       "url": "https://dev-api.ksp.gracercorp.com/api/test",
       "method": "GET",
-      "schedule": "30s",
+      "schedule": "10s",
       "expectedStatus": 200,
       "headers": {
         "Authorization": "Bearer ${API_TOKEN}"
