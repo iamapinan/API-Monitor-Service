@@ -4,7 +4,7 @@
       "name": "Example Endpoint",
       "url": "https://local.domain/api",
       "method": "GET",
-      "schedule": "30s",
+      "schedule": "10s",
       "expectedStatus": 200,
       "headers": {
       },
